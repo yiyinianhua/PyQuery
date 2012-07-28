@@ -6,15 +6,15 @@ from operator import itemgetter
 class PyQuery:
 	
 	def __init__(self):
-		#DataInList,数据结构为list(list),存储每行的数据
+		#DataInList,type is list(list):store every line's data
 		self.DataInList = []
-		#DataInDict,数据结构为dict(key:list),存储group之后的中间数据
+		#DataInDict,type is dict(key:list):store data after groupby
 		self.DataInDict = defaultdict(list)
-		#ClumnRemain,数据结构为list,存储当前数据包含的列名
+		#ClumnRemain,type is list:current clumns
 		self.ClumnRemain = []
-		#ClumnGrouped,数据结构为list,存储group by的列名
+		#ClumnGrouped,type is list:the grouped clumns
 		self.ClumnGrouped = []
-		#DataInListLength,当前数据的行数
+		#DataInListLength:total line number
 		self.DataInListLength=0
 	
 	
@@ -24,7 +24,7 @@ class PyQuery:
 		self.ClumnRemain=[oneClumn for oneClumn in clumnName]
 		splitnum=len(clumnName)
 		for oneRecord in open(inputFileName,'rb'):
-			# 过滤特殊符号'\
+			# filter special char
 			if oneRecord.find('\\')!=-1:
 				oneRecord=oneRecord.replace('\\','\\\\')
 			if oneRecord.find('\'')!=-1:
