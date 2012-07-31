@@ -1,11 +1,15 @@
 #coding=utf-8
-import heapq,time
+import heapq,time,random
 from collections import defaultdict
 from operator import itemgetter
 
 class PyQuery:
 	
 	def __init__(self):
+		self.inputFileName=''
+		self.splitFlag=''
+		#DataInTuple,type is tuple(tuple):store every line's data before select
+		self.DataInTuple = ()
 		#DataInList,type is list(list):store every line's data
 		self.DataInList = []
 		#DataInDict,type is dict(key:list):store data after groupby
@@ -19,24 +23,10 @@ class PyQuery:
 	
 	
 	def input(self,inputFileName,splitFlag,clumnName):
-		now=time.time()
-		
 		self.ClumnRemain=[oneClumn for oneClumn in clumnName]
-		splitnum=len(clumnName)
-		for oneRecord in open(inputFileName,'rb'):
-			# filter special char
-			if oneRecord.find('\\')!=-1:
-				oneRecord=oneRecord.replace('\\','\\\\')
-			if oneRecord.find('\'')!=-1:
-				oneRecord=oneRecord.replace('\'','\\\'')
-			
-			oneLineItems=[oneItem.strip() for oneItem in oneRecord.strip().split(splitFlag)]
-			if len(oneLineItems)==splitnum:
-				self.DataInList.append(oneLineItems)
-				self.DataInListLength+=1
-		
-		print 'input '+str(time.time()-now)+' seconds('+str(self.DataInListLength)+' lines)'
-		
+		self.inputFileName=inputFileName
+		self.splitFlag=splitFlag
+	
 	
 	def select(self,*ClumnSelected):
 		now=time.time()
@@ -45,14 +35,18 @@ class PyQuery:
 			assert oneSelected in self.ClumnRemain,oneSelected+' not in '+str(self.ClumnRemain)
 		
 		selectedClumnIndex=[self.ClumnRemain.index(oneSelectedClumn) for oneSelectedClumn in ClumnSelected]
-		for lineNum in xrange(self.DataInListLength):
-			self.DataInList[lineNum]=[self.DataInList[lineNum][oneClumnIndex] for oneClumnIndex in selectedClumnIndex]
 		
+		clumnNum=len(self.ClumnRemain)
+		self.DataInTuple=(tuple(oneLine.rstrip().split(self.splitFlag)) for oneLine in open(self.inputFileName))
+		self.DataInList=[[oneLine[idx].strip() for idx in selectedClumnIndex] for oneLine in self.DataInTuple if len(oneLine)==clumnNum]
+		
+		self.DataInListLength=len(self.DataInList)
 		self.ClumnRemain=list(ClumnSelected)
+		
+		print 'input '+str(self.DataInListLength)+' lines'
 		print 'select '+str(time.time()-now)+' seconds'
 		
-	
-	
+
 	def filter(self,filterClumn,filterOper,compareValue):
 		now=time.time()
 		
@@ -81,9 +75,10 @@ class PyQuery:
 			assert oneGroupByClumn in self.ClumnRemain,oneGroupByClumn+' not in '+str(self.ClumnRemain)
 		
 		groupClumnIndex=[self.ClumnRemain.index(oneGroupClumn) for oneGroupClumn in groupClumn]
+		
 		for lineNum in xrange(self.DataInListLength):
-			oneGroupedValue='\t'.join([self.DataInList[lineNum][oneGroupIndex] for oneGroupIndex in groupClumnIndex])
-			self.DataInDict[oneGroupedValue].append(self.DataInList[lineNum])
+			oneGroupedKey='\t'.join([self.DataInList[lineNum][oneGroupIndex] for oneGroupIndex in groupClumnIndex])
+			self.DataInDict[oneGroupedKey].append(self.DataInList[lineNum])
 		
 		self.DataInList=[]
 		self.DataInListLength=len(self.DataInDict)
@@ -96,8 +91,8 @@ class PyQuery:
 		now=time.time()
 		
 		countClumnIndex=self.ClumnRemain.index(countClumn)
-		for oneGroupedValue in self.DataInDict.keys():
-			self.DataInDict[oneGroupedValue]=str(len(self.DataInDict[oneGroupedValue]))
+		for oneGroupedKey in self.DataInDict.keys():
+			self.DataInDict[oneGroupedKey]=str(len(self.DataInDict[oneGroupedKey]))
 
 		for k,v in self.DataInDict.items():
 			self.DataInList.append(k.split('\t')+[v])
@@ -111,8 +106,8 @@ class PyQuery:
 		now=time.time()
 		
 		sumClumnIndex=self.ClumnRemain.index(sumClumn)
-		for oneGroupedValue in self.DataInDict.keys():
-			self.DataInDict[oneGroupedValue]=str(sum([int(oneRecord[sumClumnIndex]) for oneRecord in self.DataInDict[oneGroupedValue]]))
+		for oneGroupedKey in self.DataInDict.keys():
+			self.DataInDict[oneGroupedKey]=str(sum([int(oneRecord[sumClumnIndex]) for oneRecord in self.DataInDict[oneGroupedKey]]))
 		
 		for k,v in self.DataInDict.items():
 			self.DataInList.append(k.split()+[v])
@@ -125,8 +120,8 @@ class PyQuery:
 		now=time.time()
 		
 		averageClumnIndex=self.ClumnRemain.index(averageClumn)
-		for oneGroupedValue in self.DataInDict.keys():
-			self.DataInDict[oneGroupedValue]=str(sum([int(oneRecord[averageClumnIndex]) for oneRecord in self.DataInDict[oneGroupedValue]])/len(self.DataInDict[oneGroupedValue]))
+		for oneGroupedKey in self.DataInDict.keys():
+			self.DataInDict[oneGroupedKey]=str(sum([int(oneRecord[averageClumnIndex]) for oneRecord in self.DataInDict[oneGroupedKey]])/len(self.DataInDict[oneGroupedKey]))
 		
 		for k,v in self.DataInDict.items():
 			self.DataInList.append(k.split()+[v])
@@ -134,6 +129,72 @@ class PyQuery:
 		self.ClumnRemain=self.ClumnGrouped+[resultClumn]
 		
 		print 'averageEach '+str(time.time()-now)+' seconds'
+	
+	
+	def topEach(self,topClumn,nTop):
+		now=time.time()
+		
+		topClumnIndex=self.ClumnRemain.index(topClumn)
+		for oneGroupedValue in self.DataInDict.values():
+			for oneRecord in oneGroupedValue:
+				oneRecord[topClumnIndex]=int(oneRecord[topClumnIndex])
+		
+		for oneGroupedKey in self.DataInDict.keys():
+			compileStr='oneGroupedValue=sorted(self.DataInDict[\''+oneGroupedKey+'\'],key=itemgetter('+str(topClumnIndex)+'),reverse=True)'
+			exec compile(compileStr,'','exec')
+			nTop=min(len(oneGroupedValue),nTop)
+			self.DataInDict[oneGroupedKey]=oneGroupedValue[:nTop]
+		
+		for oneGroupedValue in self.DataInDict.values():
+			for oneRecord in oneGroupedValue:
+				oneRecord[topClumnIndex]=str(oneRecord[topClumnIndex])
+				self.DataInList.append(oneRecord)
+		self.DataInListLength=len(self.DataInList)
+		
+		print 'topEach '+str(time.time()-now)+' seconds'
+		
+	
+	def sortEachBy(self,sortType,*sortByClumns):
+		now=time.time()
+		
+		assert sortType in ('asc','desc'),sortType+' not in (asc,desc)'
+		for sortClumn in sortByClumns:
+			assert sortClumn in self.ClumnRemain,sortClumn+' not in '+str(self.ClumnRemain)
+		
+		
+		# if one sort clumn's isdigit,sort this clumn by its int value
+		sortByClumnIndex=[self.ClumnRemain.index(oneSortByClumn) for oneSortByClumn in sortByClumns]
+		intTypeClumnIndex=[oneClumnIndex for oneClumnIndex in sortByClumnIndex if self.DataInDict.values()[0][0][oneClumnIndex].isdigit()]
+		for oneGroupedValue in self.DataInDict.values():
+			for oneRecord in oneGroupedValue:
+				for oneIndex in intTypeClumnIndex:
+					oneRecord[oneIndex]=int(oneRecord[oneIndex])
+		
+		sortByClumnIndexStr=','.join([str(oneClumnIndex) for oneClumnIndex in sortByClumnIndex])
+		sortType='False' if sortType=='asc' else 'True'
+		for oneGroupedKey in self.DataInDict.keys():
+			compileStr='self.DataInDict[\''+oneGroupedKey+'\']=sorted(self.DataInDict[\''+oneGroupedKey+'\'],key=itemgetter('+sortByClumnIndexStr+'),reverse='+sortType+')'
+			exec compile(compileStr,'','exec')
+		
+		for oneGroupedValue in self.DataInDict.values():
+			for oneRecord in oneGroupedValue:
+				for oneIndex in intTypeClumnIndex:
+					oneRecord[oneIndex]=str(oneRecord[oneIndex])
+				self.DataInList.append(oneRecord)
+		self.DataInListLength=len(self.DataInList)
+		
+		print 'sortEachBy '+str(time.time()-now)+' seconds'
+		
+	
+	def changeClumnOrder(self,*clumnOrder):
+		for oneSelected in clumnOrder:
+			assert oneSelected in self.ClumnRemain,oneSelected+' not in '+str(self.ClumnRemain)
+		
+		selectedClumnIndex=[self.ClumnRemain.index(oneSelectedClumn) for oneSelectedClumn in clumnOrder]
+		for lineNum in xrange(self.DataInListLength):
+			self.DataInList[lineNum]=[self.DataInList[lineNum][oneClumnIndex] for oneClumnIndex in selectedClumnIndex]
+		
+		self.ClumnRemain=list(clumnOrder)
 	
 	
 	def top(self,topClumn,nTop):
@@ -146,9 +207,9 @@ class PyQuery:
 		tempClumnRemain.remove(topClumn)
 		tempClumnRemain.insert(0,topClumn)
 		
-		self.select(*tuple(tempClumnRemain))
+		self.changeClumnOrder(*tuple(tempClumnRemain))
 		
-		# make the type of sort clumn is int
+		# the value of top clumn must be isdigit,compare this clumn by its int value
 		for index in xrange(self.DataInListLength):
 			self.DataInList[index][0]=int(self.DataInList[index][0])
 		
@@ -198,16 +259,15 @@ class PyQuery:
 		sortByClumnIndex=[self.ClumnRemain.index(oneSortByClumn) for oneSortByClumn in sortByClumns]
 		intTypeClumnIndex=[oneClumnIndex for oneClumnIndex in sortByClumnIndex if self.DataInList[0][oneClumnIndex].isdigit()]
 		
-		# if one sortByClumn isdigit,before sort its type should change from str to int
+		# if one sort clumn's isdigit,sort this clumn by its int value
 		for oneClumnIndex in intTypeClumnIndex:
 			for index in xrange(self.DataInListLength):
 				self.DataInList[index][oneClumnIndex]=int(self.DataInList[index][oneClumnIndex])
 		
 		sortType='False' if sortType=='asc' else 'True'
 		sortByClumnIndexStr=','.join([str(oneClumnIndex) for oneClumnIndex in sortByClumnIndex])
-		compileStr='SortedDataInList=sorted(self.DataInList,key=itemgetter('+sortByClumnIndexStr+'),reverse='+sortType+')'
+		compileStr='self.DataInList=sorted(self.DataInList,key=itemgetter('+sortByClumnIndexStr+'),reverse='+sortType+')'
 		exec compile(compileStr,'','exec')
-		self.DataInList=SortedDataInList
 		
 		# after sort change its type from int to str
 		for oneClumnIndex in intTypeClumnIndex:
@@ -229,6 +289,20 @@ class PyQuery:
 		print 'head '+str(time.time()-now)+' seconds'
 	
 	
+	def sample(self,nSample):
+		now=time.time()
+		
+		if(self.DataInListLength<=nSample):
+			pass
+		else:
+			nSampleIndex=random.sample(xrange(self.DataInListLength),nSample)
+			print nSampleIndex
+			self.DataInList=[self.DataInList[index] for index in nSampleIndex]
+			self.DataInListLength=nSample
+		
+		print 'sample '+str(time.time()-now)+' seconds'
+	
+	
 	def tail(self,nTail):
 		now=time.time()
 		
@@ -242,11 +316,16 @@ class PyQuery:
 	
 	
 	def outputAsFile(self,resultFilename):
+		
 		now=time.time()
-		resultFile=open(resultFilename,'w+')
+		
 		for lineNum in xrange(self.DataInListLength):
-			resultFile.write('%s%s' % ('\t'.join(self.DataInList[lineNum]),'\n'))
+			self.DataInList[lineNum]='\t'.join(self.DataInList[lineNum])+'\n'
+		
+		resultFile=open(resultFilename,'w+')
+		resultFile.writelines(self.DataInList)
 		resultFile.close()
+		
 		print 'outputAsFile '+str(time.time()-now)+' seconds'
 	
 	
