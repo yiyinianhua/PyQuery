@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	clumnName=['username','password','email']
 	clumnNameSelect=['email']
 	myPyQuery=PyQuery()
-	myPyQuery.InputAndSelect('C:\\Users\\Administrator\\Desktop\\ITFiles\\csdnpwd','#',clumnName,clumnNameSelect)
+	myPyQuery.InputAndSelect('D:\\Desktop\\ITFiles\\csdnpwd','#',clumnName,clumnNameSelect)
 	myPyQuery.Translate(['email'],getMailHost)
 	myPyQuery.GroupBy(['email'])
 	myPyQuery.CountEach('email_count')

@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	clumnName=['travelagency','town','price_d']
 	clumnNameSelect=['travelagency','town','price_d']
 	myPyQuery=PyQuery()
-	myPyQuery.InputAndSelect('C:\\Users\\Administrator\\Desktop\\ITFiles\\2011_travelagent_5000000','\t',clumnName,clumnNameSelect)
+	myPyQuery.InputAndSelect('D:\\Desktop\\ITFiles\\2011_travelagent_5000000','\t',clumnName,clumnNameSelect)
 	myPyQuery.GroupBy(['travelagency','town'])
 	myPyQuery.SumEach(['price_d'],'price_sum')
 	myPyQuery.GroupBy(['travelagency'])

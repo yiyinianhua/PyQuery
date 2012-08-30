@@ -105,9 +105,10 @@ class PyQuery:
 			elif filterClumnDataType=='float':
 				self.TransToFloatInList(filterClumnIndex)
 		
-		if type(compareValue)==type(1) or type(compareValue)==type(1.0):
+
+		if isinstance(compareValue,int) or isinstance(compareValue,float):
 			compileStr='self.DataInList=list(ifilter(lambda x: x[%s] %s %s,self.DataInList))' % (str(filterClumnIndex),filterOper,str(compareValue))
-		elif type(compareValue)==type(''):
+		elif isinstance(compareValue,basestring):
 			compileStr='self.DataInList=list(ifilter(lambda x: x[%s] %s \'%s\',self.DataInList))' % (str(filterClumnIndex),filterOper,compareValue)
 		exec compile(compileStr,'','exec')
 		
@@ -387,7 +388,7 @@ class PyQuery:
 	def LeftJoin(self,leftClumn,rightPyQuery,rightClumn):
 		now=time.time()
 		
-		assert type(rightPyQuery) == type(self),'LeftJoin: must be two PyQuery Instance'
+		assert isinstance(rightPyQuery,PyQuery),'LeftJoin: must be two PyQuery Instance'
 		assert len(leftClumn)==1 and leftClumn[0] in self.ClumnRemain,'LeftJoin: '+leftClumn+' not in '+str(self.ClumnRemain)
 		assert len(rightClumn)==1 and rightClumn[0] in rightPyQuery.ClumnRemain,'LeftJoin: '+rightClumn+' not in '+str(rightPyQuery.ClumnRemain)
 		
@@ -423,7 +424,7 @@ class PyQuery:
 	def Head(self,nHead):
 		now=time.time()
 		
-		assert type(nHead) == type(1),'Head: must give a int'
+		assert isinstance(nHead,int),'Head: must give a int'
 		
 		if(self.DataInListLength<=nHead):
 			pass
@@ -437,7 +438,7 @@ class PyQuery:
 	def Sample(self,nSample):
 		now=time.time()
 		
-		assert type(nSample) == type(1),'Sample: must give a int'
+		assert isinstance(nSample,int),'Sample: must give a int'
 		
 		if(self.DataInListLength<=nSample):
 			pass
@@ -452,7 +453,7 @@ class PyQuery:
 	def Tail(self,nTail):
 		now=time.time()
 		
-		assert type(nTail) == type(1),'Tail: must give a int'
+		assert isinstance(nTail,int),'Tail: must give a int'
 		
 		if(self.DataInListLength<=nTail):
 			pass

@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	clumnNameL=['CITING','CITED']
 	clumnNameSelectL=['CITED']
 	myPyQueryLeft=PyQuery()
-	myPyQueryLeft.InputAndSelect('C:\\Users\\Administrator\\Desktop\\ITFiles\\cite75_99_7000000.txt','\t',clumnNameL,clumnNameSelectL)
+	myPyQueryLeft.InputAndSelect('D:\\Desktop\\ITFiles\\cite75_99_7000000.txt','\t',clumnNameL,clumnNameSelectL)
 	myPyQueryLeft.GroupBy(['CITED'])
 	myPyQueryLeft.CountEach('CITED_COUNT')
 	myPyQueryLeft.Top(['CITED_COUNT'],100)
